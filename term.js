@@ -301,6 +301,9 @@ function Terminal(options) {
   this.savedX;
   this.savedY;
   this.savedCols;
+  
+  // last write
+  this.lastWriteTicks;
 
   // stream
   this.readable = true;
@@ -1536,6 +1539,8 @@ Terminal.prototype.write = function(data) {
     , cs
     , ch;
 
+  var date = new Date();
+  this.lastWriteTicks = date.getTime();
   this.refreshStart = this.y;
   this.refreshEnd = this.y;
 

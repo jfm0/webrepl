@@ -46,7 +46,7 @@
 
 <div style="display:inline-block; vertical-align:top;">
 <form>
-<input type="text" name="webrepl_url" id="url" value="ws://192.168.4.1:8266/" />
+<input type="text" name="webrepl_url" id="url" value="ws://192.168.1.12:8266/" />
 <input type="submit" id="button" value="Connect" onclick="button_click(); return false;" />
 </form>
 <div id="term">
@@ -152,6 +152,10 @@ function update_file_status(s) {
     document.getElementById('file-status').innerHTML = s;
 }
 
+function sleep (time) {
+  return new Promise((resolve) => setTimeout(resolve, time));
+}
+
 function connect(url) {
     window.location.hash = url.substring(5);
     ws = new WebSocket(url);
@@ -162,7 +166,22 @@ function connect(url) {
             // Pasted data from clipboard will likely contain
             // LF as EOL chars.
             data = data.replace(/\n/g, "\r");
-            ws.send(data);
+            const chunkSize = 255
+            const numChunks = Math.ceil(data.length / chunkSize)
+            const chunks = new Array(numChunks)
+            for (let i = 0, o = 0; i < numChunks; ++i, o += chunkSize) {
+                chunks[i] = data.substr(o, chunkSize)
+                sleep(2000*i).then(() => {
+                    var nowDate = new Date()
+                    var tickFromLastWrite = nowDate.getTime() - term.lastWriteTicks;
+                    console.log('last write=' + term.lastWriteTicks.toString())
+                    console.log('from last write=' + tickFromLastWrite.toString())
+                    console.log('sending chunk ' + i.toString());
+                    // Do something after the sleep!
+                    ws.send(chunks[i])
+                });
+            }
+            //ws.send(data);
         });
 
         term.on('title', function(title) {
